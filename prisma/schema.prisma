@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         String     @default("user")
+  plan         String     @default("free")
+  status       String     @default("active")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  sessions     Session[]
+  resetTokens  PasswordResetToken[]
+  brandKits    BrandKit[]
+  exports      Export[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BrandKit {
+  id             String   @id @default(cuid())
+  userId         String?
+  companyName    String
+  industry       String
+  description    String
+  targetAudience String
+  brandStyle     String
+  websiteUrl     String?
+  preferredColor String?
+  logoUrl        String?
+  generatedData  Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exports        Export[]
+}
+
+model Export {
+  id         String   @id @default(cuid())
+  userId     String?
+  brandKitId String
+  exportType String
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brandKit   BrandKit @relation(fields: [brandKitId], references: [id], onDelete: Cascade)
+}
+
+model AdminSettings {
+  id                  String   @id @default("default")
+  freeKitLimit        Int      @default(1)
+  proPrice            Float    @default(7)
+  businessPrice       Float    @default(19)
+  lifetimePrice       Float    @default(39)
+  pdfExportEnabled    Boolean  @default(true)
+  zipExportEnabled    Boolean  @default(true)
+  logoUploadEnabled   Boolean  @default(true)
+  cssExportEnabled    Boolean  @default(true)
+  jsonExportEnabled   Boolean  @default(true)
+  watermarkFreePlan   Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+}
