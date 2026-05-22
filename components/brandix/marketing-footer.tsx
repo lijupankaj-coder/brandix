@@ -20,7 +20,7 @@ export function MarketingFooter() {
         </div>
         <div className="space-y-2 text-sm">
           <p className="font-medium">Nebulix</p>
-          <p className="text-muted-foreground">AI SaaS tools for small teams.</p>
+          <Link href="https://nebulixcloud.com" target="_blank" rel="noopener" className="block text-muted-foreground hover:text-foreground">nebulixcloud.com</Link>
           <p className="text-muted-foreground">hello@nebulixcloud.com</p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 text-xs">
             <Link href="/refund.html" className="text-muted-foreground hover:text-foreground">Refund</Link>
@@ -28,6 +28,9 @@ export function MarketingFooter() {
             <Link href="/dpa.html" className="text-muted-foreground hover:text-foreground">DPA</Link>
           </div>
         </div>
+      </div>
+      <div className="mx-auto max-w-7xl border-t border-border/40 px-6 py-4 text-xs text-muted-foreground">
+        © 2026 Nebulix. All rights reserved.
       </div>
     </footer>
   );
