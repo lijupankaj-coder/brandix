@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const SESSION_COOKIE = "brandix_session";
-const protectedPrefixes = ["/dashboard", "/account", "/admin"];
+const protectedPrefixes = ["/dashboard", "/account"];
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
