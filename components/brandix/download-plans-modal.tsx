@@ -62,14 +62,27 @@ export function useBrandixLicense() {
   return { ...license, hasLicense: Boolean(license.key && license.info), setLicense, clearLicense };
 }
 
+const PRICING_API = "https://nblx-cffe300c-platform.nebulixcloud.com/api/public/pricing";
+
 export function DownloadPlansModal({ open, onClose, onActivated }: { open: boolean; onClose: () => void; onActivated?: () => void }) {
   const { key, info, hasLicense, setLicense, clearLicense } = useBrandixLicense();
   const [inputKey, setInputKey] = useState("");
   const [error, setError] = useState("");
+  const [prices, setPrices] = useState({ monthly: 9, yearly: 89 });
 
   useEffect(() => {
     if (open) setInputKey(key || "");
   }, [key, open]);
+
+  useEffect(() => {
+    fetch(PRICING_API, { signal: AbortSignal.timeout(3000) })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const app = data?.apps?.find((a: { slug: string }) => a.slug === "brandix");
+        if (app) setPrices({ monthly: Number(app.proPrice), yearly: Number(app.teamPrice) });
+      })
+      .catch(() => {});
+  }, []);
 
   if (!open) return null;
 
@@ -109,7 +122,7 @@ export function DownloadPlansModal({ open, onClose, onActivated }: { open: boole
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <h3 className="font-bold">Monthly</h3>
             <div className="mt-2 flex items-end gap-2">
-              <span className="text-3xl font-bold">$9</span>
+              <span className="text-3xl font-bold">${prices.monthly}</span>
               <span className="pb-1 text-sm font-medium text-slate-500">/ month</span>
             </div>
             <p className="mt-2 text-sm leading-5 text-slate-500">All features. Export unlimited client-ready ZIP files monthly.</p>
@@ -124,7 +137,7 @@ export function DownloadPlansModal({ open, onClose, onActivated }: { open: boole
             <span className="absolute right-4 top-4 rounded-full bg-slate-950 px-2 py-1 text-xs font-bold text-white">Best value</span>
             <h3 className="font-bold">Yearly</h3>
             <div className="mt-2 flex items-end gap-2">
-              <span className="text-3xl font-bold">$89</span>
+              <span className="text-3xl font-bold">${prices.yearly}</span>
               <span className="pb-1 text-sm font-medium text-slate-500">/ year</span>
             </div>
             <p className="mt-2 text-sm leading-5 text-slate-500">All features. Best value, save over 17% with annual billing.</p>

@@ -3,39 +3,54 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const plans = [
-  {
-    name: "Free Builder",
-    price: "$0",
-    description: "Create and preview brand kits without an account.",
-    features: ["Unlimited building", "Full preview", "Brand colors", "Typography", "Messaging ideas"],
-    cta: "Start building"
-  },
-  {
-    name: "Monthly",
-    price: "$9/mo",
-    description: "Unlock client-ready downloads monthly.",
-    features: ["PDF downloads", "Complete ZIP export", "CSS and JSON export", "Tailwind snippets", "Social copy files", "Logo included"],
-    cta: "Choose Monthly",
-    highlighted: true
-  },
-  {
-    name: "Yearly",
-    price: "$89/yr",
-    description: "Best value for repeat brand work.",
-    features: ["All monthly features", "Save over 17%", "Unlimited client-ready exports", "Annual license", "Commercial usage"],
-    cta: "Choose Yearly"
-  },
-  {
-    name: "Already Paid",
-    price: "License",
-    description: "Activate your browser with a Brandix key.",
-    features: ["Paste license key", "Unlock downloads", "Keep building free", "Use on this browser"],
-    cta: "Activate key"
-  }
-];
+const PRICING_API = "https://nblx-cffe300c-platform.nebulixcloud.com/api/public/pricing";
 
-export function PricingCards() {
+async function fetchBrandixPrices(): Promise<{ monthly: number; yearly: number }> {
+  try {
+    const res = await fetch(PRICING_API, { next: { revalidate: 60 } });
+    if (!res.ok) return { monthly: 9, yearly: 89 };
+    const data = await res.json();
+    const app = data.apps?.find((a: { slug: string }) => a.slug === "brandix");
+    return app ? { monthly: Number(app.proPrice), yearly: Number(app.teamPrice) } : { monthly: 9, yearly: 89 };
+  } catch {
+    return { monthly: 9, yearly: 89 };
+  }
+}
+
+export async function PricingCards() {
+  const prices = await fetchBrandixPrices();
+  const plans = [
+    {
+      name: "Free Builder",
+      price: "$0",
+      description: "Create and preview brand kits without an account.",
+      features: ["Unlimited building", "Full preview", "Brand colors", "Typography", "Messaging ideas"],
+      cta: "Start building"
+    },
+    {
+      name: "Monthly",
+      price: `$${prices.monthly}/mo`,
+      description: "Unlock client-ready downloads monthly.",
+      features: ["PDF downloads", "Complete ZIP export", "CSS and JSON export", "Tailwind snippets", "Social copy files", "Logo included"],
+      cta: "Choose Monthly",
+      highlighted: true
+    },
+    {
+      name: "Yearly",
+      price: `$${prices.yearly}/yr`,
+      description: "Best value for repeat brand work.",
+      features: ["All monthly features", "Save over 17%", "Unlimited client-ready exports", "Annual license", "Commercial usage"],
+      cta: "Choose Yearly"
+    },
+    {
+      name: "Already Paid",
+      price: "License",
+      description: "Activate your browser with a Brandix key.",
+      features: ["Paste license key", "Unlock downloads", "Keep building free", "Use on this browser"],
+      cta: "Activate key"
+    }
+  ];
+
   return (
     <div className="grid gap-4 lg:grid-cols-4">
       {plans.map((plan) => (
