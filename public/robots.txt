@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /brand-kits
+Disallow: /nblx-cffe300c-ctrl
+
+Sitemap: https://brandix.nebulixcloud.com/sitemap.xml
