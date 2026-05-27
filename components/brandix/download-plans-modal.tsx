@@ -173,12 +173,11 @@ export function DownloadPlansModal({ open, onClose, onActivated }: { open: boole
               <span className="pb-1 text-sm font-medium text-slate-500">/ month</span>
             </div>
             <p className="mt-2 text-sm leading-5 text-slate-500">All features. Export unlimited client-ready ZIP files monthly.</p>
-            <a
-              href="mailto:hello@nebulixcloud.com?subject=Brandix%20Monthly%20Plan"
-              className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-violet-600 text-sm font-semibold text-white hover:bg-violet-700"
-            >
+            <button type="button" onClick={async () => {
+              try { const r = await fetch(NBLX_API + "/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ appSlug: "brandix", plan: "pro", successUrl: window.location.href + "?payment=success", cancelUrl: window.location.href }) }); const d = await r.json(); window.location.href = d.url || d.fallbackUrl; } catch { window.location.href = "mailto:hello@nebulixcloud.com?subject=Brandix%20Monthly%20Plan"; }
+            }} className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-violet-600 text-sm font-semibold text-white hover:bg-violet-700">
               Choose Monthly
-            </a>
+            </button>
           </div>
           <div className="relative rounded-lg border border-slate-200 bg-slate-50 p-4">
             <span className="absolute right-4 top-4 rounded-full bg-slate-950 px-2 py-1 text-xs font-bold text-white">Best value</span>
@@ -188,12 +187,11 @@ export function DownloadPlansModal({ open, onClose, onActivated }: { open: boole
               <span className="pb-1 text-sm font-medium text-slate-500">/ year</span>
             </div>
             <p className="mt-2 text-sm leading-5 text-slate-500">All features. Best value, save over 17% with annual billing.</p>
-            <a
-              href="mailto:hello@nebulixcloud.com?subject=Brandix%20Yearly%20Plan"
-              className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-violet-600 text-sm font-semibold text-white hover:bg-violet-700"
-            >
+            <button type="button" onClick={async () => {
+              try { const r = await fetch(NBLX_API + "/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ appSlug: "brandix", plan: "team", successUrl: window.location.href + "?payment=success", cancelUrl: window.location.href }) }); const d = await r.json(); window.location.href = d.url || d.fallbackUrl; } catch { window.location.href = "mailto:hello@nebulixcloud.com?subject=Brandix%20Yearly%20Plan"; }
+            }} className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-violet-600 text-sm font-semibold text-white hover:bg-violet-700">
               Choose Yearly
-            </a>
+            </button>
           </div>
         </div>
 
