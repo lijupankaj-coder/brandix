@@ -19,6 +19,8 @@ function parseBrandixLicenseKey(key: string): BrandixLicenseInfo["plan"] | null 
   const value = key.trim().toUpperCase();
   if (value === PERMANENT_BRANDIX_LICENSE_KEY) return "permanent";
   if (/^BRX-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(value)) return "manual";
+  if (value.startsWith("NBX-SUITE-")) return "manual";
+  if (key.startsWith("EMAIL:")) return "manual";
   return null;
 }
 
@@ -63,11 +65,15 @@ export function useBrandixLicense() {
 }
 
 const PRICING_API = "https://nblx-cffe300c-platform.nebulixcloud.com/api/public/pricing";
+const NBLX_API = "https://nblx-cffe300c-platform.nebulixcloud.com/api/public";
 
 export function DownloadPlansModal({ open, onClose, onActivated }: { open: boolean; onClose: () => void; onActivated?: () => void }) {
   const { key, info, hasLicense, setLicense, clearLicense } = useBrandixLicense();
   const [inputKey, setInputKey] = useState("");
   const [error, setError] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
   const [prices, setPrices] = useState({ monthly: 9, yearly: 89 });
 
   useEffect(() => {
@@ -86,17 +92,58 @@ export function DownloadPlansModal({ open, onClose, onActivated }: { open: boole
 
   if (!open) return null;
 
-  const activate = () => {
+  const activateByEmail = async () => {
+    const email = emailInput.trim();
+    if (!email.includes("@")) { setEmailError("Enter a valid email address."); return; }
+    setEmailBusy(true);
+    setEmailError("");
+    try {
+      const res = await fetch(NBLX_API + "/validate-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, appSlug: "brandix" }),
+      });
+      const d = await res.json();
+      if (d.valid) {
+        setLicense("EMAIL:" + email.toLowerCase(), "manual");
+        setEmailError("");
+        onActivated?.();
+      } else {
+        setEmailError("No active Brandix subscription found for this email.");
+      }
+    } catch {
+      setEmailError("Could not connect. Try again.");
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
+  const activate = async () => {
     const value = inputKey.trim().toUpperCase();
+    if (!value) { setError("Enter your license key."); return; }
+    // Suite key — validate against super admin
+    if (value.startsWith("NBX-SUITE-")) {
+      setError("");
+      try {
+        const res = await fetch(NBLX_API + "/validate-license", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: value }),
+        });
+        const d = await res.json();
+        if (d.valid) {
+          setLicense(value, "manual");
+          onActivated?.();
+        } else {
+          setError("Suite key invalid or expired.");
+        }
+      } catch {
+        setError("Could not connect. Try again.");
+      }
+      return;
+    }
     const plan = parseBrandixLicenseKey(value);
-    if (!value) {
-      setError("Enter your Brandix license key.");
-      return;
-    }
-    if (!plan) {
-      setError("Enter a valid Brandix license key.");
-      return;
-    }
+    if (!plan) { setError("Enter a valid Brandix license key."); return; }
     setLicense(value, plan);
     setError("");
     onActivated?.();
@@ -152,9 +199,21 @@ export function DownloadPlansModal({ open, onClose, onActivated }: { open: boole
 
         <div className="mt-3 rounded-lg border border-slate-200 p-4">
           <h3 className="font-bold">Already paid?</h3>
-          <p className="mt-1 text-sm text-slate-500">Paste your Brandix or permanent Nebulix license key to unlock downloads on this browser.</p>
+          <p className="mt-1 text-sm text-slate-500">Enter the email you used at checkout to unlock downloads on this browser.</p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <Input value={inputKey} onChange={(event) => setInputKey(event.target.value)} placeholder="NBX-LIJU-BRDX-2026" className="border-slate-300 bg-white text-slate-950" />
+            <Input type="email" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} placeholder="you@example.com" className="border-slate-300 bg-white text-slate-950" />
+            <Button type="button" onClick={activateByEmail} disabled={emailBusy} className="bg-white text-slate-900 hover:bg-slate-50" variant="outline">
+              {emailBusy ? "Checking…" : "Activate"}
+            </Button>
+          </div>
+          {emailError && <p className="mt-3 text-sm font-medium text-red-600">{emailError}</p>}
+        </div>
+
+        <div className="mt-3 rounded-lg border border-slate-200 p-4">
+          <h3 className="font-bold">Have a license key or Nebulix Suite key?</h3>
+          <p className="mt-1 text-sm text-slate-500">Paste your Brandix license key or NBX-SUITE key to unlock downloads on this browser.</p>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Input value={inputKey} onChange={(event) => setInputKey(event.target.value)} placeholder="BRX-XXXX or NBX-SUITE-XXXX" className="border-slate-300 bg-white text-slate-950" />
             <Button type="button" onClick={activate} className="bg-white text-slate-900 hover:bg-slate-50" variant="outline">Activate</Button>
           </div>
           {hasLicense && (
